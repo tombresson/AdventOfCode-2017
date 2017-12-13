@@ -5,7 +5,8 @@ import re
 class Program(object):
     def __init__(self, id):
         self.id = id
-        self.connections= []
+        self.connections: List[Program] = []
+
 
 def traverse_graph(node: Program, visited_nodes: List[str]):
     for x in node.connections:
@@ -45,10 +46,28 @@ def main():
                 # Append the connection to the prgm
                 prgm.connections.append(prgms[int(token)])
 
+    # Find nodes connected to zero
     nodes_connected_to_zero = []
     traverse_graph(prgms[0], nodes_connected_to_zero)
 
+    # Find number of groups
+    node_groups: List[List] = []
+    for node in prgms:
+        node_found = False;
+        for node_list in node_groups:
+            if node in node_list:
+                node_found = True
+
+        # If the node is not in a list of nodes yet
+        # Add a new list and traverse the graph starting at that node
+        if not node_found:
+            new_list = []
+            node_groups.append(new_list)
+            traverse_graph(node, new_list)
+
+
     print(len(nodes_connected_to_zero))
+    print(len(node_groups))
 
 
 
