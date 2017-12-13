@@ -6,6 +6,7 @@ class Node(object):
     def __init__(self, name, weight):
         self.name = name
         self.weight = weight
+        self.supported_weight = 0
         self.parent = None
         self.children = []
 
@@ -13,23 +14,49 @@ class Node(object):
         return len(self.children) == 0
 
     def isRoot(self):
-        return self.parent == self
+        return self.parent is None
 
 
 def all_same(items: list):
     return all(x == items[0] for x in items)
 
 
-def find_unbalanced(tree_node: Node):
+def populate_supported_weight(node: Node):
     list_of_child_weights = []
-    if len(tree_node.children) > 0:
-        for node in tree_node.children:
-            list_of_child_weights.append(find_unbalanced(node))
+    if len(node.children) > 0:
+        for x in node.children:
+            list_of_child_weights.append(populate_supported_weight(x))
 
-    if not all_same(list_of_child_weights):
-        print(tree_node.name)
+    # Sum up weights of children
+    for weight in list_of_child_weights:
+        node.supported_weight += weight
 
-    return tree_node.weight
+    # Add in own weight
+    node.supported_weight += node.weight
+
+    return node.supported_weight
+
+
+def find_unbalanced(tree_node: Node):
+    # Only one child will be different from the rest
+    weights = []
+    counts = []
+
+    for node in tree_node.children:
+        if node.supported_weight in weights:
+            idx = weights.index(node.supported_weight)
+            counts[idx] += 1
+        else:
+            weights.append(node.supported_weight)
+            counts.append(1)
+
+    # Only a single node should have a count of one
+    unbal_weight = weights[counts.index(1)]
+
+    # for node in tree_node.children:
+    #     if node.supported_weight == unbal_weight:
+    #         # Traverse down the tree
+
 
 
 
@@ -43,7 +70,7 @@ def main():
     # Populate all nodes in tree
     for line in data_file:
         tokens = re.findall(r'(\w+)', line)
-        tree.append(Node(tokens[0], tokens[1]))
+        tree.append(Node(tokens[0], int(tokens[1])))
 
     # Reset file position to beginning
     data_file.seek(0)
@@ -61,12 +88,14 @@ def main():
                         # Add child to parent
                         tree[i].children.append(node)
 
+    # Find root node
     for node in tree:
-        if node.parent == None:
-            print("Tree Root:" + node.name)
+        node: Node = node
+        if node.isRoot():
             root_node = node
+            print("Tree Root: " + node.name)
 
-
+    populate_supported_weight(root_node)
     find_unbalanced(root_node)
 
 
